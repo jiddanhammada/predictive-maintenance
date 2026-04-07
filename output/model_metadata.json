@@ -1,0 +1,30 @@
+{
+  "best_model": "LSTM",
+  "feature_cols": [
+    "type_encoded",
+    "air_temperature_k",
+    "process_temperature_k",
+    "rotational_speed_rpm",
+    "torque_nm",
+    "tool_wear_min",
+    "power_w",
+    "temp_diff_k",
+    "overstrain_value",
+    "hdf_risk",
+    "pwf_risk",
+    "osf_risk",
+    "tool_wear_ratio",
+    "risk_score"
+  ],
+  "xgb_metrics": {
+    "f1": 0.6743,
+    "roc_auc": 0.9758
+  },
+  "lstm_metrics": {
+    "f1": 0.6848,
+    "roc_auc": 0.9757
+  },
+  "scaler_path": "models/scaler.pkl",
+  "xgb_path": "models/xgb_model.pkl",
+  "lstm_path": "models/lstm_model.pt"
+}
