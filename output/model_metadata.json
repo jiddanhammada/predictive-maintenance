@@ -21,8 +21,8 @@
     "roc_auc": 0.9758
   },
   "lstm_metrics": {
-    "f1": 0.6848,
-    "roc_auc": 0.9757
+    "f1": 0.6854,
+    "roc_auc": 0.9915
   },
   "scaler_path": "models/scaler.pkl",
   "xgb_path": "models/xgb_model.pkl",

@@ -186,7 +186,9 @@ with mlflow.start_run(run_name='XGBoost'):
     mlflow.log_params(xgb_params)
     mlflow.log_metrics(xgb_metrics)
     mlflow.log_artifact(f"{OUTPUT_DIR}/cm_xgboost.png")
-    mlflow.xgboost.log_model(xgb_model, 'xgb_model')
+    import joblib
+    joblib.dump(xgb_model, "models/xgb_model.pkl")
+    print("✅ Model disimpan dengan joblib")
 
     # Simpan lokal
     joblib.dump(xgb_model, f'{MODEL_DIR}/xgb_model.pkl')
