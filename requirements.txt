@@ -1,5 +1,5 @@
 ﻿pandas
-numpy==1.26.4
+numpy
 matplotlib
 seaborn
 joblib
@@ -9,5 +9,5 @@ imbalanced-learn
 mlflow
 shap
 streamlit
-torch==2.2.0
-torchvision==0.17.0
+torch==2.11.0
+torchvision
