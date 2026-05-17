@@ -21,7 +21,7 @@ from imblearn.over_sampling import SMOTE
 
 import mlflow
 import mlflow.sklearn
-import mlflow.xgboost
+
 
 import torch
 import torch.nn as nn
@@ -169,32 +169,86 @@ xgb_params = {
 
 with mlflow.start_run(run_name='XGBoost'):
 
-    # Train
     xgb_model = XGBClassifier(**xgb_params)
-    xgb_model.fit(
-        X_train_res, y_train_res,
-        eval_set=[(X_test_scaled, y_test)],
-        verbose=False
-    )
+    xgb_model.fit(X_train_res, y_train_res,
+                  eval_set=[(X_test_scaled, y_test)],
+                  verbose=False)
 
-    # Evaluasi
-    xgb_metrics = evaluate_model(
-        xgb_model, X_test_scaled, y_test, 'XGBoost'
-    )
+    xgb_metrics = evaluate_model(xgb_model, X_test_scaled, y_test, 'XGBoost')
 
-    # Log ke MLflow
+    # === MLflow Logging yang Stabil ===
     mlflow.log_params(xgb_params)
     mlflow.log_metrics(xgb_metrics)
     mlflow.log_artifact(f"{OUTPUT_DIR}/cm_xgboost.png")
-    import joblib
-    joblib.dump(xgb_model, "models/xgb_model.pkl")
-    print("✅ Model disimpan dengan joblib")
 
-    # Simpan lokal
+    mlflow.sklearn.log_model(
+        xgb_model,
+        artifact_path="xgb_model",
+        registered_model_name="predictive_maintenance_xgb"
+    )
+
     joblib.dump(xgb_model, f'{MODEL_DIR}/xgb_model.pkl')
 
-print(f"\n✅ Section 4 selesai — XGBoost disimpan → {MODEL_DIR}/xgb_model.pkl")
+print(f"\n✅ Section 4 selesai — XGBoost + MLflow OK → {MODEL_DIR}/xgb_model.pkl")
 
+# ============================================================
+# SECTION 4B: HYPERPARAMETER TUNING — XGBOOST
+# ============================================================
+from sklearn.model_selection import RandomizedSearchCV
+
+print("\nHyperparameter Tuning — XGBoost...")
+
+param_dist = {
+    'n_estimators'    : [100, 200, 300, 500],
+    'max_depth'       : [3, 4, 5, 6, 7],
+    'learning_rate'   : [0.01, 0.05, 0.1, 0.2],
+    'subsample'       : [0.6, 0.7, 0.8, 0.9],
+    'colsample_bytree': [0.6, 0.7, 0.8, 0.9],
+    'min_child_weight': [1, 3, 5],
+}
+
+xgb_search = RandomizedSearchCV(
+    XGBClassifier(
+        scale_pos_weight=(y_train == 0).sum() / (y_train == 1).sum(),
+        random_state=42,
+        eval_metric='logloss',
+        verbosity=0
+    ),
+    param_distributions=param_dist,
+    n_iter=30,
+    cv=5,
+    scoring='f1',
+    n_jobs=-1,
+    random_state=42,
+    verbose=1
+)
+
+xgb_search.fit(X_train_res, y_train_res)
+
+print(f"\nBest params : {xgb_search.best_params_}")
+print(f"Best CV F1  : {xgb_search.best_score_:.4f}")
+
+# Retrain with best params
+with mlflow.start_run(run_name='XGBoost_Tuned'):
+    xgb_model = XGBClassifier(
+        **xgb_search.best_params_,
+        scale_pos_weight=(y_train == 0).sum() / (y_train == 1).sum(),
+        random_state=42,
+        eval_metric='logloss',
+        verbosity=0
+    )
+    xgb_model.fit(X_train_res, y_train_res,
+                  eval_set=[(X_test_scaled, y_test)],
+                  verbose=False)
+
+    xgb_metrics = evaluate_model(xgb_model, X_test_scaled, y_test, 'XGBoost Tuned')
+
+    mlflow.log_params(xgb_search.best_params_)
+    mlflow.log_metrics(xgb_metrics)
+    mlflow.sklearn.log_model(xgb_model, 'xgb_model_tuned')
+    joblib.dump(xgb_model, f'{MODEL_DIR}/xgb_model.pkl')
+
+print(f"\n✅ Section 4B selesai — XGBoost Tuned disimpan")
 
 # ============================================================
 # SECTION 5: SHAP / EXPLAINABLE AI
@@ -461,6 +515,8 @@ print(f"\n✅ Section 7 selesai — Metadata disimpan → {OUTPUT_DIR}/model_met
 print("\n" + "="*40)
 print("  SEMUA OUTPUT TERSIMPAN")
 print("="*40)
+
+# Perbaikan print loop
 for f in sorted(os.listdir(OUTPUT_DIR)):
     print(f"  → output/{f}")
 for f in sorted(os.listdir(MODEL_DIR)):
