@@ -1,9 +1,41 @@
-﻿__pycache__/
+﻿# ==================== Virtual Environment ====================
+venv*/
+venv311/
+venv/
+.env
+
+# ==================== Python Cache ====================
+__pycache__/
 *.pyc
+*.pyo
+*.pyd
+
+# ==================== VS Code ====================
 .vscode/
+
+# ==================== ML & Model Files ====================
 mlruns/
 *.pt
 *.pkl
-.env
+*.joblib
+models/*.pkl
+models/
 
-venv311/
+# ==================== Generated Files ====================
+images/
+*.png
+*.jpg
+*.jpeg
+
+# ==================== Streamlit & Deployment ====================
+.streamlit/secrets.toml
+
+# ==================== Logs & Large Data ====================
+*.log
+*.csv.bak
+data/raw/
+data/processed/
+
+# ==================== OS ====================
+.DS_Store
+Thumbs.db
